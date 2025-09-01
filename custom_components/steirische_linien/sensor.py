@@ -196,9 +196,16 @@ class SteirischeLinienDataUpdateCoordinator(DataUpdateCoordinator):
                     if destination is not None:
                         departure_info['destination'] = destination.text
                     
-                    # Get times
+                    # Get times from API
                     board_estimated = first_timed_leg.find('.//trias:LegBoard//trias:EstimatedTime', namespaces)
                     board_scheduled = first_timed_leg.find('.//trias:LegBoard//trias:TimetabledTime', namespaces)
+                    
+                    # Store raw API times
+                    scheduled_time_str = board_scheduled.text if board_scheduled is not None else ""
+                    live_time_str = board_estimated.text if board_estimated is not None else ""
+                    
+                    departure_info['scheduled_departure_time'] = scheduled_time_str
+                    departure_info['live_departure_time'] = live_time_str
                     
                     departure_time_str = None
                     is_delayed = False
@@ -294,6 +301,8 @@ class TransitDepartureSensor(CoordinatorEntity, SensorEntity):
                 "line": departure.get('line', 'Unknown'),
                 "destination": departure.get('destination', 'Unknown'),
                 "departure_time": departure.get('time', ''),
+                "scheduled_departure_time": departure.get('scheduled_departure_time', ''),
+                "live_departure_time": departure.get('live_departure_time', ''),
                 "is_delayed": departure.get('is_delayed', False),
                 "is_scheduled": departure.get('is_scheduled', False),
             }
