@@ -9,7 +9,8 @@ from xml.etree import ElementTree as ET
 import aiohttp
 import async_timeout
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
+from homeassistant.const import UnitOfTime
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -272,14 +273,16 @@ class TransitDepartureSensor(CoordinatorEntity, SensorEntity):
         self._index = index
         self._attr_unique_id = f"{entry_id}_departure_{index + 1}"
         self._attr_name = f"Transit Departure {index + 1}"
+        self._attr_native_unit_of_measurement = UnitOfTime.MINUTES
+        self._attr_device_class = SensorDeviceClass.DURATION
 
     @property
-    def state(self) -> str | None:
+    def state(self) -> int | None:
         """Return the state of the sensor."""
         if self.coordinator.data and len(self.coordinator.data) > self._index:
             departure = self.coordinator.data[self._index]
             minutes = departure.get('minutes', 0)
-            return str(minutes)
+            return minutes
         return None
 
     @property
