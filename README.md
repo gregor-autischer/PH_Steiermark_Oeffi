@@ -20,7 +20,7 @@ A Home Assistant custom integration for real-time public transit departure infor
 1. Ensure [HACS](https://hacs.xyz/) is installed
 2. Add this repository as a custom repository:
    - HACS → Integrations → Menu → Custom repositories
-   - Repository: `https://github.com/gregor/PH_Steiermark_Oeffi`
+   - Repository: `https://github.com/gregor-autischer/PH_Steiermark_Oeffi`
    - Category: `Integration`
 3. Click "Install"
 4. Restart Home Assistant
