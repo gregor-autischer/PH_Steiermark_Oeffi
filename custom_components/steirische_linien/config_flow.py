@@ -18,10 +18,10 @@ _LOGGER = logging.getLogger(__name__)
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required("api_url"): str,
-        vol.Required("origin_latitude", default=47.061130): float,
-        vol.Required("origin_longitude", default=15.466008): float,
-        vol.Required("destination_latitude", default=47.081397): float,
-        vol.Required("destination_longitude", default=15.464796): float,
+        vol.Required("origin_latitude"): float,
+        vol.Required("origin_longitude"): float,
+        vol.Required("destination_latitude"): float,
+        vol.Required("destination_longitude"): float,
     }
 )
 

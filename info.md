@@ -25,6 +25,6 @@ Each sensor shows:
 
 ## Quick Start
 
-After installation, configure via UI with your origin and destination coordinates.
-
-Default route: HBG → LKH Graz Auenbrugger Platz 15
+After installation, configure via UI with:
+- TRIAS API URL from your transit provider  
+- Your origin and destination coordinates

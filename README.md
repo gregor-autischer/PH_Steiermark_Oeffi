@@ -36,14 +36,10 @@ A Home Assistant custom integration for real-time public transit departure infor
 
 Configure through the UI with:
 - **TRIAS API URL**: The API endpoint URL (contact your transit provider)
-- **Origin Latitude/Longitude**: Your starting point
-- **Destination Latitude/Longitude**: Your destination
+- **Origin Latitude/Longitude**: Your starting point coordinates
+- **Destination Latitude/Longitude**: Your destination coordinates
 
-Default coordinates:
-- Origin: HBG (47.061130, 15.466008)
-- Destination: LKH Graz Auenbrugger Platz 15 (47.081397, 15.464796)
-
-**Note**: You need to obtain the TRIAS API URL from your local transit provider.
+**Note**: You need to obtain the TRIAS API URL from your local transit provider and determine your specific route coordinates.
 
 ## Sensors
 

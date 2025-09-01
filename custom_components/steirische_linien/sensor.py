@@ -79,10 +79,10 @@ class SteirischeLinienDataUpdateCoordinator(DataUpdateCoordinator):
     async def _fetch_departures(self):
         """Fetch departure data from TRIAS API."""
         api_url = self.config_data.get("api_url")
-        origin_lat = self.config_data.get("origin_latitude", 47.061130)
-        origin_lon = self.config_data.get("origin_longitude", 15.466008)
-        dest_lat = self.config_data.get("destination_latitude", 47.081397)
-        dest_lon = self.config_data.get("destination_longitude", 15.464796)
+        origin_lat = self.config_data.get("origin_latitude")
+        origin_lon = self.config_data.get("origin_longitude")
+        dest_lat = self.config_data.get("destination_latitude")
+        dest_lon = self.config_data.get("destination_longitude")
         
         xml_request = self._create_trip_request_xml(
             origin_lat, origin_lon,
