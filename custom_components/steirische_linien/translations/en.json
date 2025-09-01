@@ -1,0 +1,24 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Powerhaus - Steirische Öffis",
+        "description": "Set up your origin and destination coordinates for transit information.",
+        "data": {
+          "api_url": "TRIAS API URL",
+          "origin_latitude": "Origin Latitude",
+          "origin_longitude": "Origin Longitude",
+          "destination_latitude": "Destination Latitude",
+          "destination_longitude": "Destination Longitude"
+        }
+      }
+    },
+    "error": {
+      "invalid_coordinates": "Invalid coordinates provided",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Device is already configured"
+    }
+  }
+}

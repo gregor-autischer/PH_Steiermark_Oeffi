@@ -1,0 +1,13 @@
+{
+  "domain": "steirische_linien",
+  "name": "Powerhaus - Steirische Öffis",
+  "codeowners": ["@gregor"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/gregor/PH_Steiermark_Oeffi",
+  "issue_tracker": "https://github.com/gregor/PH_Steiermark_Oeffi/issues",
+  "integration_type": "device",
+  "iot_class": "cloud_polling",
+  "requirements": [],
+  "version": "1.0.0"
+}
