@@ -279,14 +279,7 @@ class TransitDepartureSensor(CoordinatorEntity, SensorEntity):
         if self.coordinator.data and len(self.coordinator.data) > self._index:
             departure = self.coordinator.data[self._index]
             minutes = departure.get('minutes', 0)
-            state = str(minutes)
-            
-            if departure.get('is_scheduled'):
-                state += "*"
-            if departure.get('is_delayed'):
-                state += "!"
-            
-            return state
+            return str(minutes)
         return None
 
     @property
