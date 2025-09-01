@@ -282,7 +282,7 @@ class TransitDepartureSensor(CoordinatorEntity, SensorEntity):
         if self.coordinator.data and len(self.coordinator.data) > self._index:
             departure = self.coordinator.data[self._index]
             minutes = departure.get('minutes', 0)
-            return minutes
+            return int(minutes)
         return None
 
     @property
