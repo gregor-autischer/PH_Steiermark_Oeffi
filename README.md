@@ -101,4 +101,4 @@ Uses the TRIAS API from Verbund Linie
 
 ## License
 
-MIT
+Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
