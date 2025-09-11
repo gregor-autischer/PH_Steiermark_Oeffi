@@ -1,0 +1,84 @@
+title: Steirische Linien Development
+views:
+  - title: Home
+    path: home
+    badges: []
+    cards:
+      - type: markdown
+        content: |
+          # Steirische Linien Development Environment
+          
+          ## Setup Instructions:
+          1. Go to **Settings** → **Devices & Services**
+          2. Click **+ Add Integration**
+          3. Search for **Powerhaus - Steirische Öffis**
+          4. Follow the configuration wizard to set up your API and coordinates
+          
+          Once configured, the transit departure card below will show live data.
+
+      - type: custom:steirische-linien-card
+        sensor_1: sensor.transit_departure_1
+        sensor_2: sensor.transit_departure_2
+        sensor_3: sensor.transit_departure_3
+        sensor_4: sensor.transit_departure_4
+        sensor_5: sensor.transit_departure_5
+        sensor_6: sensor.transit_departure_6
+        sensor_7: sensor.transit_departure_7
+
+      - type: markdown
+        content: |
+          ## Individual Sensor Cards
+          Below are the individual sensor entities for debugging:
+
+      - type: grid
+        columns: 2
+        cards:
+          - type: entity
+            entity: sensor.transit_departure_1
+            name: Departure 1
+          - type: entity
+            entity: sensor.transit_departure_2
+            name: Departure 2
+          - type: entity
+            entity: sensor.transit_departure_3
+            name: Departure 3
+          - type: entity
+            entity: sensor.transit_departure_4
+            name: Departure 4
+          - type: entity
+            entity: sensor.transit_departure_5
+            name: Departure 5
+          - type: entity
+            entity: sensor.transit_departure_6
+            name: Departure 6
+          - type: entity
+            entity: sensor.transit_departure_7
+            name: Departure 7
+
+  - title: Debug
+    path: debug
+    badges: []
+    cards:
+      - type: markdown
+        content: |
+          # Debug Information
+          
+          ## Integration Status
+          Check if the integration is properly loaded and configured.
+          
+          ## Tips:
+          - Check **Settings** → **System** → **Logs** for any errors
+          - Enable debug logging in configuration.yaml
+          - Use Developer Tools → States to inspect sensor attributes
+
+      - type: logbook
+        entities:
+          - sensor.transit_departure_1
+          - sensor.transit_departure_2
+          - sensor.transit_departure_3
+          - sensor.transit_departure_4
+          - sensor.transit_departure_5
+          - sensor.transit_departure_6
+          - sensor.transit_departure_7
+        hours_to_show: 2
+        title: Recent Sensor Updates

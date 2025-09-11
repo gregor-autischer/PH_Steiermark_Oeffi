@@ -1,0 +1,36 @@
+# Home Assistant Configuration for Development
+
+# Configure a default setup of Home Assistant
+default_config:
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+# Frontend configuration
+frontend:
+  themes: !include_dir_merge_named themes
+
+# Lovelace configuration with custom card resource
+lovelace:
+  # mode: yaml  # Commented out to use storage mode (UI editor)
+  resources:
+    - url: /local/steirische-linien-card.js?v=4
+      type: module
+
+# Logger configuration for debugging
+logger:
+  default: warning
+  logs:
+    custom_components.steirische_linien: debug
+
+# HTTP configuration
+http:
+  cors_allowed_origins:
+    - http://localhost:8333
+    - http://127.0.0.1:8333
+
+# Example automation
+automation: []
+script: []
+scene: []
