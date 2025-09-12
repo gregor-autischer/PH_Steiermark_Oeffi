@@ -15,7 +15,7 @@ frontend:
 lovelace:
   # mode: yaml  # Commented out to use storage mode (UI editor)
   resources:
-    - url: /local/steirische-linien-card.js?v=4
+    - url: /local/steirische-linien-card.js?v=5
       type: module
 
 # Logger configuration for debugging

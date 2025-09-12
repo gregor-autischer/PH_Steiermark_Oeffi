@@ -56,7 +56,7 @@ class SteirischeLinienCard extends HTMLElement {
           .minutes {
             font-size: 18px;
             font-weight: bold;
-            color: var(--primary-color);
+            color: var(--primary-text-color);
           }
           .minutes-label {
             font-size: 12px;
@@ -100,7 +100,7 @@ class SteirischeLinienCard extends HTMLElement {
   updateDepartures() {
     if (!this._hass || !this.config) return;
 
-    const departures = [];
+    let departures = [];
     
     // Collect all 7 departure sensors
     for (let i = 1; i <= 7; i++) {
@@ -127,6 +127,10 @@ class SteirischeLinienCard extends HTMLElement {
     // Sort by minutes
     departures.sort((a, b) => a.minutes - b.minutes);
 
+    // Limit to configured number of departures
+    const maxDepartures = this.config.departure_count || 7;
+    departures = departures.slice(0, maxDepartures);
+
     // Render departures
     if (departures.length === 0) {
       this.content.innerHTML = '<div class="no-departures">Keine Abfahrten verfügbar</div>';
@@ -145,15 +149,23 @@ class SteirischeLinienCard extends HTMLElement {
         statusText = 'FAHRPLAN';
       }
 
+      // Get custom color for this line
+      let lineColor = '';
+      if (this.config && this.config.line_colors) {
+        const colorConfig = this.config.line_colors.find(lc => lc.line === dep.line);
+        if (colorConfig && colorConfig.color) {
+          lineColor = `style="background-color: ${colorConfig.color}"`;
+        }
+      }
+
       return `
         <div class="departure-row">
-          <div class="line-badge">${this.escapeHtml(dep.line)}</div>
+          <div class="line-badge" ${lineColor}>${this.escapeHtml(dep.line)}</div>
           <div class="destination">${this.escapeHtml(dep.destination)}</div>
           <div class="time-info">
             <div class="minutes ${statusClass}">
               ${dep.minutes}<span class="minutes-label">min</span>
             </div>
-            ${statusText ? `<div class="status-indicator ${statusClass}">${statusText}</div>` : ''}
           </div>
         </div>
       `;
@@ -196,76 +208,232 @@ class SteirischeLinienCard extends HTMLElement {
 
 // Card Editor
 class SteirischeLinienCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    // Material Design Icon for add
+    this.addIcon = "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z";
+  }
+
   setConfig(config) {
     this._config = config;
     this.render();
   }
 
   render() {
-    if (!this.hass) return;
+    if (!this.hass || !this._config) return;
+    
+    // Prevent re-rendering if already rendered with same config
+    const configString = JSON.stringify(this._config);
+    if (this._lastConfigString === configString) return;
+    this._lastConfigString = configString;
+
+    const lineColors = this._config.line_colors || [];
 
     this.innerHTML = `
       <div class="card-config">
-        <div class="config-header">
-          <h3>Steirische Linien Card Configuration</h3>
-          <p>Configure the sensor entities for each departure (optional)</p>
+        <div class="config-section">
+          <h3 class="section-title">Display Configuration</h3>
+          <p class="section-description">Choose how many departures to display</p>
+          <ha-select
+            id="departure_count"
+            label="Number of departures"
+          >
+            ${[1, 2, 3, 4, 5, 6, 7].map(n => `
+              <mwc-list-item value="${n}">${n} departure${n > 1 ? 's' : ''}</mwc-list-item>
+            `).join('')}
+          </ha-select>
         </div>
-        ${[1, 2, 3, 4, 5, 6, 7].map(i => `
-          <div class="config-row">
-            <label for="sensor_${i}">Departure ${i} Sensor:</label>
-            <input
-              type="text"
-              id="sensor_${i}"
-              value="${this._config[`sensor_${i}`] || `sensor.transit_departure_${i}`}"
-              placeholder="sensor.transit_departure_${i}"
-            />
-          </div>
-        `).join('')}
+        
+        <div class="config-section">
+          <h3 class="section-title">Line Colors</h3>
+          <p class="section-description">Set custom colors for specific line numbers</p>
+        </div>
+        
+        <div id="line-colors-container">
+          ${lineColors.map((lc, index) => `
+            <div class="line-color-row" data-index="${index}">
+              <ha-textfield
+                class="line-filter"
+                label="Line Number"
+                placeholder="e.g., 64"
+                data-index="${index}"
+              ></ha-textfield>
+              <input
+                type="color"
+                class="line-color"
+                value="${lc.color || '#2196F3'}"
+                title="Choose color"
+              />
+              <button
+                class="remove-line-color"
+                data-index="${index}"
+                title="Remove"
+              >×</button>
+            </div>
+          `).join('')}
+        </div>
+        
+        <ha-button
+          id="add-line-color"
+          raised
+        ><ha-icon .path="${this.addIcon}"></ha-icon>Add Line Color</ha-button>
       </div>
       <style>
         .card-config {
-          padding: 16px;
+          padding: 0;
         }
-        .config-header {
-          margin-bottom: 16px;
+        .config-section {
+          margin-bottom: 24px;
         }
-        .config-header h3 {
+        .section-title {
           margin: 0 0 8px 0;
+          font-size: 16px;
+          font-weight: 500;
+          color: var(--primary-text-color);
         }
-        .config-header p {
-          margin: 0;
+        .section-description {
+          margin: 0 0 16px 0;
           color: var(--secondary-text-color);
           font-size: 14px;
         }
-        .config-row {
-          margin-bottom: 12px;
-        }
-        .config-row label {
-          display: block;
-          margin-bottom: 4px;
-          font-size: 14px;
-          color: var(--primary-text-color);
-        }
-        .config-row input {
+        ha-textfield {
           width: 100%;
-          padding: 8px;
+          margin-bottom: 16px;
+          display: block;
+        }
+        ha-select {
+          width: 100%;
+          display: block;
+        }
+        .line-color-row {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 16px;
+          align-items: center;
+          height: 56px;
+        }
+        .line-filter {
+          flex: 1;
+          min-width: 150px;
+          max-width: 50%;
+          margin-bottom: 0;
+        }
+        .line-color {
+          width: 60px;
+          height: 100%;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          outline: 1px solid var(--outline-color);
+          position: relative;
+        }
+        .line-color:focus {
+          outline: 2px solid var(--primary-color);
+        }
+        ha-button {
+          margin-top: 16px;
+        }
+        ha-button ha-icon {
+          margin-right: 8px;
+        }
+        .remove-line-color {
+          width: 32px;
+          height: 32px;
           border: 1px solid var(--divider-color);
           border-radius: 4px;
-          background-color: var(--card-background-color);
-          color: var(--primary-text-color);
+          background: var(--card-background-color);
+          color: var(--secondary-text-color);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          font-weight: bold;
+        }
+        .remove-line-color:hover {
+          color: var(--error-color);
+          border-color: var(--error-color);
+        }
+        #add-line-color {
+          margin-top: 8px;
+          padding-bottom: 16px;
         }
       </style>
     `;
+    
+    // Set values immediately after creating elements
+    const departureSelect = this.querySelector('#departure_count');
+    if (departureSelect) {
+      departureSelect.value = (this._config.departure_count || 7).toString();
+    }
+    
+    // Set line filter values
+    lineColors.forEach((lc, index) => {
+      const lineInput = this.querySelector(`.line-filter[data-index="${index}"]`);
+      if (lineInput) {
+        lineInput.value = lc.line || '';
+      }
+    });
 
-    // Add event listeners
-    [1, 2, 3, 4, 5, 6, 7].forEach(i => {
-      const input = this.querySelector(`#sensor_${i}`);
-      input.addEventListener('input', (e) => {
+    // Add event listener for departure count
+    const departureCount = this.querySelector('#departure_count');
+    if (departureCount) {
+      departureCount.addEventListener('change', (e) => {
         this._config = {
           ...this._config,
-          [`sensor_${i}`]: e.target.value
+          departure_count: parseInt(e.target.value)
         };
         this.dispatchEvent(new CustomEvent('config-changed', { detail: { config: this._config } }));
+      });
+    }
+
+    // Add line color button
+    const addButton = this.querySelector('#add-line-color');
+    addButton.addEventListener('click', () => {
+      const lineColors = [...(this._config.line_colors || [])];
+      lineColors.push({ line: '', color: '#2196F3' });
+      this._config = { ...this._config, line_colors: lineColors };
+      this.dispatchEvent(new CustomEvent('config-changed', { detail: { config: this._config } }));
+      this.render();
+    });
+
+    // Line color inputs
+    this.querySelectorAll('.line-color-row').forEach(row => {
+      const index = parseInt(row.dataset.index);
+      
+      const lineInput = row.querySelector('.line-filter');
+      lineInput.addEventListener('change', (e) => {
+        const lineColors = [...(this._config.line_colors || [])];
+        lineColors[index] = { ...lineColors[index], line: e.target.value };
+        this._config = { ...this._config, line_colors: lineColors };
+        this.dispatchEvent(new CustomEvent('config-changed', { detail: { config: this._config } }));
+      });
+
+      const colorInput = row.querySelector('.line-color');
+      colorInput.addEventListener('change', (e) => {
+        e.stopPropagation();
+        const lineColors = [...(this._config.line_colors || [])];
+        lineColors[index] = { ...lineColors[index], color: e.target.value };
+        this._config = { ...this._config, line_colors: lineColors };
+        this.dispatchEvent(new CustomEvent('config-changed', { detail: { config: this._config } }));
+      });
+      
+      // Prevent color picker from closing when clicking inside
+      colorInput.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+      
+      colorInput.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+      });
+
+      const removeButton = row.querySelector('.remove-line-color');
+      removeButton.addEventListener('click', () => {
+        const lineColors = [...(this._config.line_colors || [])];
+        lineColors.splice(index, 1);
+        this._config = { ...this._config, line_colors: lineColors };
+        this.dispatchEvent(new CustomEvent('config-changed', { detail: { config: this._config } }));
+        this.render();
       });
     });
   }
@@ -273,6 +441,10 @@ class SteirischeLinienCardEditor extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     this.render();
+  }
+
+  get hass() {
+    return this._hass;
   }
 }
 
