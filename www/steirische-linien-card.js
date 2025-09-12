@@ -164,7 +164,7 @@ class SteirischeLinienCard extends HTMLElement {
           <div class="destination">${this.escapeHtml(dep.destination)}</div>
           <div class="time-info">
             <div class="minutes ${statusClass}">
-              ${dep.minutes}<span class="minutes-label">min</span>
+              ${dep.minutes}
             </div>
           </div>
         </div>
@@ -454,7 +454,7 @@ customElements.define('steirische-linien-card-editor', SteirischeLinienCardEdito
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "steirische-linien-card",
-  name: "Steirische Linien Card",
+  name: "PH Steiermark Oeffi Card",
   description: "Display transit departures from Steirische Linien",
   preview: false,
   documentationURL: "https://github.com/gregor-autischer/PH_Steiermark_Oeffi"

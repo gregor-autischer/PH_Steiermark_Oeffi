@@ -2,7 +2,7 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 
-A Home Assistant custom integration for real-time public transit departure information from Steirische Linien (Verbund Linie) in Styria, Austria.
+A Home Assistant custom integration for real-time public transit departure information for Public Transit in Styria, Austria (Steiermark, Österreich).
 
 ## Features
 
@@ -35,11 +35,11 @@ A Home Assistant custom integration for real-time public transit departure infor
 ## Configuration
 
 Configure through the UI with:
-- **TRIAS API URL**: The API endpoint URL (contact your transit provider)
+- **TRIAS API URL**: The API endpoint URL (contact the transit provider)
 - **Origin Latitude/Longitude**: Your starting point coordinates
 - **Destination Latitude/Longitude**: Your destination coordinates
 
-**Note**: You need to obtain the TRIAS API URL from your local transit provider and determine your specific route coordinates.
+**Note**: You need to obtain the TRIAS API URL from the styrian transit provider and determine your specific route coordinates. How to obtain the API URL is described on this site: https://www.verbundlinie.at/de/kundenservice/weitere-infostellen/faqs-hilfe/faq-zur-ogd-service-schnittstelle-trias
 
 ## Sensors
 
@@ -47,17 +47,74 @@ The integration creates 7 sensors (`sensor.transit_departure_1` through `sensor.
 
 ### State
 - Minutes until departure
-- `*` suffix: Scheduled time (no real-time data)
-- `!` suffix: Delayed
 
 ### Attributes
 - `line`: Transit line number
 - `destination`: Direction/destination
 - `departure_time`: Time in HH:MM format
 - `is_delayed`: Boolean for delay status
-- `is_scheduled`: Boolean for data type
+- `is_scheduled`: Boolean for data type if only scheduled info and no live data is available
 
-## Example Lovelace Card
+## Custom Dashboard Card
+
+This integration includes a custom Lovelace card for a beautiful display of transit departures.
+
+### Installation
+
+1. Copy the `www/steirische-linien-card.js` file to your Home Assistant `config/www/` directory
+2. Add the resource to your dashboard:
+   - Go to **Settings → Dashboards → Resources** (three dots menu → Resources)
+   - Click **+ Add Resource**
+   - URL: `/local/steirische-linien-card.js`
+   - Resource type: **JavaScript Module**
+3. Add the card to your dashboard:
+   - Edit Dashboard → Add Card → Manual
+   - Use the configuration below
+
+### Card Configuration
+
+The card can be easily configured through Home Assistant's visual editor:
+
+1. **Add the card** to your dashboard (Edit Dashboard → Add Card → search "PH Steiermark")
+2. **Click the edit/configure button** on the card
+3. **Configure the following options:**
+   - **Number of departures**: Choose how many departures to display (1-7, default: 7)
+   - **Line colors**: Add custom colors for specific transit lines:
+     - Enter line number (e.g., "64")
+     - Choose color using the color picker
+     - Add multiple line colors as needed
+     - Remove unwanted colors with the × button
+
+#### Alternative: YAML Configuration
+
+If you prefer to configure via YAML:
+
+**Basic Configuration:**
+```yaml
+type: custom:steirische-linien-card
+```
+
+**Advanced Configuration:**
+```yaml
+type: custom:steirische-linien-card
+departure_count: 5  # Number of departures to show (1-7, default: 7)
+line_colors:  # Custom colors for specific lines
+  - line: "64"
+    color: "#FF5722"
+  - line: "40"
+    color: "#4CAF50"
+```
+
+### Card Features
+
+- **Clean, compact display** with line badges, destinations, and minutes
+- **Color-coded minutes**: Black (real-time), Red (delayed), Orange (scheduled)
+- **Configurable departure count**: Show 1-7 departures
+- **Custom line colors**: Set specific colors for different transit lines
+- **Visual configuration**: Easy setup through Home Assistant's UI editor
+- **Responsive design**: Adapts to different screen sizes
+
+### Alternative: Basic Lovelace Card
 
 ```yaml
 type: entities
@@ -70,30 +127,6 @@ entities:
   - entity: sensor.transit_departure_3
     name: 3rd Departure
 ```
-
-## Development
-
-### Testing with Docker
-
-```bash
-docker-compose up -d
-```
-Access at http://localhost:8222
-
-### Project Structure
-```
-custom_components/steirische_linien/
-├── __init__.py
-├── manifest.json
-├── config_flow.py
-├── sensor.py
-└── translations/
-    └── en.json
-```
-
-## Credits
-
-Uses the TRIAS API from Verbund Linie
 
 ## License
 
