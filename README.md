@@ -61,15 +61,20 @@ This integration includes a custom Lovelace card for a beautiful display of tran
 
 ### Installation
 
-1. Copy the `www/steirische-linien-card.js` file to your Home Assistant `config/www/` directory
-2. Add the resource to your dashboard:
-   - Go to **Settings → Dashboards → Resources** (three dots menu → Resources)
-   - Click **+ Add Resource**
+The integration installs automatically via HACS, but the card requires one additional step:
+
+1. **Install the integration** via HACS (as described above)
+2. **Add the card file manually:**
+   - Download `www/steirische-linien-card.js` from the [GitHub repository](https://github.com/gregor-autischer/PH_Steiermark_Oeffi)
+   - Copy it to your Home Assistant `config/www/` directory
+3. **Add the resource:**
+   - Settings → Dashboards → Resources → Add Resource
    - URL: `/local/steirische-linien-card.js`
-   - Resource type: **JavaScript Module**
-3. Add the card to your dashboard:
-   - Edit Dashboard → Add Card → Manual
-   - Use the configuration below
+   - Type: JavaScript Module
+4. **Restart Home Assistant**
+5. **Add the card:**
+   - Edit Dashboard → Add Card → Search "PH Steiermark"
+   - Or Add Card → Manual (use configuration below)
 
 ### Card Configuration
 
