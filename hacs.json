@@ -6,6 +6,5 @@
   "homeassistant": "2023.1.0",
   "content_in_root": false,
   "zip_release": false,
-  "hide_default_branch": false,
-  "filename": "steirische-linien-card.js"
+  "hide_default_branch": false
 }
