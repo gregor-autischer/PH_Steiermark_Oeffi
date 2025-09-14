@@ -16,6 +16,8 @@ A Home Assistant custom integration for real-time public transit departure infor
 
 ## Installation
 
+A installation tutorial is available on YouTube (Video in German!): https://youtu.be/SNTVm_d8RSk
+
 ### Option 1: HACS (Recommended)
 
 1. Ensure [HACS](https://hacs.xyz/) is installed
