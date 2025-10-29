@@ -12,7 +12,10 @@ A Home Assistant custom integration for real-time public transit departure infor
 - ⏱️ Updates every minute
 - 📊 Creates 7 sensor entities for next departures
 - 🔔 Shows delays and scheduled vs real-time data
-- 📍 Configurable origin and destination coordinates
+- 🔄 **Two monitoring modes:**
+  - **Trip Planning Mode**: Monitor connections between two locations using coordinates
+  - **Station Departures Mode**: Monitor all departures from a single station by name
+- 🔍 Automatic station search with interactive selection
 
 ## Installation
 
@@ -37,12 +40,33 @@ A installation tutorial is available on YouTube (Video in German!): https://yout
 
 ## Configuration
 
-Configure through the UI with:
-- **TRIAS API URL**: The API endpoint URL (contact the transit provider)
+The integration supports two monitoring modes that you can choose during setup:
+
+### Mode 1: Trip Planning (Origin → Destination)
+Monitor transit connections between two specific locations using coordinates.
+
+**Required configuration:**
+- **TRIAS API URL**: The API endpoint URL
 - **Origin Latitude/Longitude**: Your starting point coordinates
 - **Destination Latitude/Longitude**: Your destination coordinates
 
-**Note**: You need to obtain the TRIAS API URL from the styrian transit provider and determine your specific route coordinates. How to obtain the API URL is described on this site: https://www.verbundlinie.at/de/kundenservice/weitere-infostellen/faqs-hilfe/faq-zur-ogd-service-schnittstelle-trias
+**Use case**: Track the next 7 departures for your daily commute between specific locations.
+
+### Mode 2: Station Departures (Single Station)
+Monitor all departures from a specific station by name.
+
+**Required configuration:**
+- **TRIAS API URL**: The API endpoint URL
+- **Station Name**: Name of the station (e.g., "Graz Hauptbahnhof")
+
+The integration will automatically:
+1. Search for matching stations via the TRIAS API
+2. Present you with a list of found stations
+3. Let you select the exact station you want to monitor
+
+**Use case**: Monitor all departures from your local bus/tram stop or train station.
+
+**Note**: You need to obtain the TRIAS API URL from the Styrian transit provider. How to obtain the API URL is described on this site: https://www.verbundlinie.at/de/kundenservice/weitere-infostellen/faqs-hilfe/faq-zur-ogd-service-schnittstelle-trias
 
 ## Sensors
 
