@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from xml.etree import ElementTree as ET
 
@@ -18,6 +18,18 @@ from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
     UpdateFailed,
+)
+
+from .const import (
+    MODE_TRIP,
+    MODE_STATION,
+    CONF_MODE,
+    CONF_API_URL,
+    CONF_ORIGIN_LAT,
+    CONF_ORIGIN_LON,
+    CONF_DEST_LAT,
+    CONF_DEST_LON,
+    CONF_STOP_POINT_REF,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -79,17 +91,24 @@ class SteirischeLinienDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _fetch_departures(self):
         """Fetch departure data from TRIAS API."""
-        api_url = self.config_data.get("api_url")
-        origin_lat = self.config_data.get("origin_latitude")
-        origin_lon = self.config_data.get("origin_longitude")
-        dest_lat = self.config_data.get("destination_latitude")
-        dest_lon = self.config_data.get("destination_longitude")
-        
-        xml_request = self._create_trip_request_xml(
-            origin_lat, origin_lon,
-            dest_lat, dest_lon,
-            datetime.now()
-        )
+        mode = self.config_data.get(CONF_MODE, MODE_TRIP)
+        api_url = self.config_data.get(CONF_API_URL)
+
+        # Determine which XML request to create based on mode
+        if mode == MODE_STATION:
+            stop_point_ref = self.config_data.get(CONF_STOP_POINT_REF)
+            xml_request = self._create_stop_event_request_xml(stop_point_ref)
+        else:
+            # Trip mode (default/legacy)
+            origin_lat = self.config_data.get(CONF_ORIGIN_LAT)
+            origin_lon = self.config_data.get(CONF_ORIGIN_LON)
+            dest_lat = self.config_data.get(CONF_DEST_LAT)
+            dest_lon = self.config_data.get(CONF_DEST_LON)
+            xml_request = self._create_trip_request_xml(
+                origin_lat, origin_lon,
+                dest_lat, dest_lon,
+                datetime.now()
+            )
 
         headers = {
             "User-Agent": "HomeAssistant",
@@ -103,7 +122,12 @@ class SteirischeLinienDataUpdateCoordinator(DataUpdateCoordinator):
                 headers=headers
             ) as response:
                 response_text = await response.text()
-                return self._parse_departures(response_text)
+
+                # Parse response based on mode
+                if mode == MODE_STATION:
+                    return self._parse_stop_events(response_text)
+                else:
+                    return self._parse_departures(response_text)
 
     def _create_trip_request_xml(
         self,
@@ -263,6 +287,150 @@ class SteirischeLinienDataUpdateCoordinator(DataUpdateCoordinator):
             
         except Exception as e:
             _LOGGER.error(f"Error parsing response: {e}")
+            return []
+
+    def _create_stop_event_request_xml(self, stop_point_ref: str) -> str:
+        """Create TRIAS XML request for station departures."""
+        now = datetime.now(timezone.utc).isoformat()
+
+        return f"""<?xml version="1.0" encoding="UTF-8"?>
+<Trias xmlns="http://www.vdv.de/trias" version="1.2">
+  <ServiceRequest>
+    <siri:RequestTimestamp xmlns:siri="http://www.siri.org.uk/siri">{now}</siri:RequestTimestamp>
+    <siri:RequestorRef xmlns:siri="http://www.siri.org.uk/siri">homeassistant</siri:RequestorRef>
+    <RequestPayload>
+      <StopEventRequest>
+        <Location>
+          <LocationRef>
+            <StopPointRef>{stop_point_ref}</StopPointRef>
+          </LocationRef>
+          <DepArrTime>{now}</DepArrTime>
+        </Location>
+        <Params>
+          <NumberOfResults>20</NumberOfResults>
+          <StopEventType>departure</StopEventType>
+          <IncludePreviousCalls>false</IncludePreviousCalls>
+          <IncludeOnwardCalls>false</IncludeOnwardCalls>
+          <IncludeRealtimeData>true</IncludeRealtimeData>
+        </Params>
+      </StopEventRequest>
+    </RequestPayload>
+  </ServiceRequest>
+</Trias>"""
+
+    def _parse_stop_events(self, xml_text: str) -> list[dict]:
+        """Parse station departure events from TRIAS StopEventRequest response."""
+        departures = []
+
+        try:
+            namespaces = {
+                'trias': 'http://www.vdv.de/trias',
+                'siri': 'http://www.siri.org.uk/siri'
+            }
+
+            root = ET.fromstring(xml_text)
+            stop_events = root.findall('.//trias:StopEvent', namespaces)
+
+            now = datetime.now(timezone.utc)
+
+            for event in stop_events:
+                try:
+                    departure_info = {}
+
+                    # Extract line number
+                    line_name = event.find('.//trias:PublishedLineName/trias:Text', namespaces)
+                    if line_name is not None:
+                        departure_info['line'] = line_name.text
+
+                    # Extract destination
+                    destination_text = event.find('.//trias:DestinationText/trias:Text', namespaces)
+                    if destination_text is not None:
+                        departure_info['destination'] = destination_text.text
+
+                    # Extract departure times
+                    service_departure = event.find('.//trias:ThisCall/trias:CallAtStop/trias:ServiceDeparture', namespaces)
+
+                    timetabled_time_str = None
+                    estimated_time_str = None
+
+                    if service_departure is not None:
+                        timetabled_elem = service_departure.find('trias:TimetabledTime', namespaces)
+                        if timetabled_elem is not None:
+                            timetabled_time_str = timetabled_elem.text
+
+                        estimated_elem = service_departure.find('trias:EstimatedTime', namespaces)
+                        if estimated_elem is not None:
+                            estimated_time_str = estimated_elem.text
+
+                    # Store raw API times
+                    departure_info['scheduled_departure_time'] = timetabled_time_str or ""
+                    departure_info['live_departure_time'] = estimated_time_str or ""
+
+                    # Determine which time to use
+                    departure_time_str = estimated_time_str or timetabled_time_str
+                    is_delayed = False
+                    is_scheduled = False
+
+                    if estimated_time_str and timetabled_time_str:
+                        try:
+                            timetabled_dt = datetime.fromisoformat(timetabled_time_str.replace('Z', '+00:00'))
+                            estimated_dt = datetime.fromisoformat(estimated_time_str.replace('Z', '+00:00'))
+                            if estimated_dt > timetabled_dt:
+                                is_delayed = True
+                        except:
+                            pass
+                    elif not estimated_time_str:
+                        is_scheduled = True
+
+                    if departure_time_str:
+                        try:
+                            # Parse ISO format with timezone
+                            dep_dt = datetime.fromisoformat(departure_time_str.replace('Z', '+00:00'))
+
+                            # Only include future departures
+                            if dep_dt >= now:
+                                time_diff = dep_dt - now
+                                minutes = int(time_diff.total_seconds() / 60)
+
+                                # Convert to local time for display
+                                local_time = dep_dt.astimezone()
+
+                                departure_info['minutes'] = minutes
+                                departure_info['time'] = local_time.strftime("%H:%M")
+                                departure_info['is_delayed'] = is_delayed
+                                departure_info['is_scheduled'] = is_scheduled
+
+                                departures.append(departure_info)
+                        except Exception as e:
+                            _LOGGER.debug(f"Error parsing departure time: {e}")
+                            pass
+
+                except Exception as e:
+                    _LOGGER.debug(f"Error parsing stop event: {e}")
+                    continue
+
+            # Sort by minutes until departure
+            departures.sort(key=lambda x: x.get('minutes', 999))
+
+            # Filter out duplicates based on line, destination, and time
+            seen = set()
+            unique_departures = []
+            for dep in departures:
+                key = (
+                    dep.get('line', ''),
+                    dep.get('destination', ''),
+                    dep.get('time', '')
+                )
+                if key not in seen:
+                    seen.add(key)
+                    unique_departures.append(dep)
+                    if len(unique_departures) >= 7:
+                        break
+
+            return unique_departures
+
+        except Exception as e:
+            _LOGGER.error(f"Error parsing stop events: {e}")
             return []
 
 

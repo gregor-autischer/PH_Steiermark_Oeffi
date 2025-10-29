@@ -3,7 +3,14 @@
     "step": {
       "user": {
         "title": "Configure Powerhaus - Steirische Öffis",
-        "description": "Set up your origin and destination coordinates for transit information.",
+        "description": "Choose how you want to monitor transit information.",
+        "data": {
+          "mode": "Monitoring Mode"
+        }
+      },
+      "trip": {
+        "title": "Trip Planning Mode",
+        "description": "Configure origin and destination coordinates for trip planning between two locations.",
         "data": {
           "api_url": "TRIAS API URL",
           "origin_latitude": "Origin Latitude",
@@ -11,10 +18,27 @@
           "destination_latitude": "Destination Latitude",
           "destination_longitude": "Destination Longitude"
         }
+      },
+      "station": {
+        "title": "Station Departures Mode",
+        "description": "Enter a station name to monitor all departures from that station.",
+        "data": {
+          "api_url": "TRIAS API URL",
+          "station_name": "Station Name"
+        }
+      },
+      "select_station": {
+        "title": "Select Station",
+        "description": "Found {count} matching station(s). Please select the station you want to monitor.",
+        "data": {
+          "station": "Station"
+        }
       }
     },
     "error": {
       "invalid_coordinates": "Invalid coordinates provided",
+      "invalid_station": "Invalid station name",
+      "no_stations_found": "No stations found matching your search. Please try a different name.",
       "unknown": "Unexpected error"
     },
     "abort": {
